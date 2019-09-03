@@ -1391,8 +1391,12 @@ namespace UnityEngine.Rendering.HighDefinition
                 && screenSpaceShadowIndex < m_Asset.currentPlatformRenderPipelineSettings.hdShadowInitParams.maxScreenSpaceShadows
                 && additionalLightData.WillRenderScreenSpaceShadow())
             {
+                // Keep track of the shadow map (for indirect lighting and transparents)
+                lightData.shadowIndex = shadowIndex;
+                additionalLightData.shadowIndex = shadowIndex;
+
+                // Keep track of the screen space shadow data
                 lightData.screenSpaceShadowIndex = screenSpaceShadowIndex;
-                additionalLightData.shadowIndex = -1;
                 m_CurrentScreenSpaceShadowData[screenSpaceShadowIndex].additionalLightData = additionalLightData;
                 m_CurrentScreenSpaceShadowData[screenSpaceShadowIndex].lightDataIndex = m_lightList.lights.Count;
                 m_CurrentScreenSpaceShadowData[screenSpaceShadowIndex].valid = true;

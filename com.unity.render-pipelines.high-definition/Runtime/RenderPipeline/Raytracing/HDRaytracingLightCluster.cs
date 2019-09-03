@@ -231,12 +231,14 @@ namespace UnityEngine.Rendering.HighDefinition
             for (int lightIdx = 0; lightIdx < lightArray.hdLightArray.Count; ++lightIdx)
             {
                 HDAdditionalLightData currentLight = lightArray.hdLightArray[lightIdx];
-                Light light = currentLight.gameObject.GetComponent<Light>();
 
                 // When the user deletes a light source in the editor, there is a single frame where the light is null before the collection of light in the scene is triggered
                 // the workaround for this is simply to not add it if it is null for that invalid frame
-                if (currentLight != null && light.enabled)
+                if (currentLight != null)
                 {
+                    Light light = currentLight.gameObject.GetComponent<Light>();
+                    if (light == null || !light.enabled) continue;
+
                     float lightRange = light.range;
                     m_LightVolumesCPUArray[realIndex].range = new Vector3(lightRange, lightRange, lightRange);
                     m_LightVolumesCPUArray[realIndex].position = currentLight.gameObject.transform.position;
