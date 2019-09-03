@@ -123,6 +123,22 @@ namespace UnityEditor.Rendering.HighDefinition
             ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, ScriptableObject.CreateInstance<DoCreateNewAssetDiffusionProfileSettings>(), "New Diffusion Profile.asset", icon, null);
         }
 
+        [MenuItem("Assets/Create/Rendering/C# Post Process Volume", priority = CoreUtils.assetCreateMenuPriority3)]
+        static void MenuCreateCSharpPostProcessVolume()
+        {
+            const string customPassTemplateGUID = "1bb8232738d39e745aa3b65ce2b5c720"; // CustomPostProcessingVolume.template
+            string templatePath = AssetDatabase.GUIDToAssetPath(customPassTemplateGUID);
+            ProjectWindowUtil.CreateScriptAssetFromTemplateFile(templatePath, "New Post Process.cs");
+        }
+
+        [MenuItem("Assets/Create/Shader/HDRP/Post Process", priority = CoreUtils.assetCreateMenuPriority3)]
+        static void MenuCreatePostProcessShader()
+        {
+            const string customPassTemplateGUID = "c8dfd21a39c594c4f809da30f1b4a980"; // CustomPostProcessingShader.template
+            string templatePath = AssetDatabase.GUIDToAssetPath(customPassTemplateGUID);
+            ProjectWindowUtil.CreateScriptAssetFromTemplateFile(templatePath, "New Post Process.shader");
+        }
+
         //[MenuItem("Internal/HDRP/Add \"Additional Light-shadow Data\" (if not present)")]
         static void AddAdditionalLightData()
         {
