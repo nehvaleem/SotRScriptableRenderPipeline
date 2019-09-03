@@ -244,6 +244,14 @@ namespace UnityEngine.Rendering.HighDefinition
             return rpSetting.supportRayTracing && UnityEngine.SystemInfo.supportsRayTracing;
         }
 
+        // List of custom post process Types that will be executed in the project, in the order of the list (top to back)
+        [SerializeField]
+        internal List< Type > beforeTransparentCustomPostProcesses = new List<Type>();
+        [SerializeField]
+        internal List< Type > beforePostProcessCustomPostProcesses = new List<Type>();
+        [SerializeField]
+        internal List< Type > afterPostProcessCustomPostProcesses = new List<Type>();
+
 #if UNITY_EDITOR
         public override Material defaultMaterial
         {

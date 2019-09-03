@@ -505,9 +505,34 @@ namespace UnityEngine.Rendering.HighDefinition
 
                         PoolSource(ref source, destination);
                     }
-                }
 
-                // TODO: User effects go here
+                    // TODO: local function
+                    using (new ProfilingSample(cmd, "Custom Post Process Before PP", CustomSamplerId.CustomPostProcessBeforePP.GetSampler()))
+                    {
+                        // HDRenderPipeline.defaultAsset.
+                        var stack = VolumeManager.instance.stack;
+                        foreach (var comp in stack.components.Values)
+                        {
+                            if (comp is CustomPostProcessVolumeComponent customPP)
+                            {
+                                if (customPP.injectionPoint != CustomPostProcessInjectionPoint.AfterPostProcess)
+                                    continue;
+                                
+                                customPP.SetupIfNeeded();
+
+                                var pp2 = customPP as IPostProcessComponent;
+
+                                if (customPP is IPostProcessComponent pp && pp.IsActive())
+                                {
+                                    var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
+                                    CoreUtils.SetRenderTarget(cmd, destination);
+                                    customPP.Render(cmd, camera, source, destination);
+                                    PoolSource(ref source, destination);
+                                }
+                            }
+                        }
+                    }
+                }
 
                 if (dynResHandler.DynamicResolutionEnabled() &&     // Dynamic resolution is on.
                     camera.antialiasing == AntialiasingMode.FastApproximateAntialiasing &&
@@ -2297,6 +2322,15 @@ namespace UnityEngine.Rendering.HighDefinition
             }
 
             HDUtils.DrawFullScreen(cmd, backBufferRect, m_FinalPassMaterial, destination, depthBuffer);
+        }
+
+        #endregion
+
+        #region User Post Processes
+        
+        void DoUserBeforeTransparent()
+        {
+            // TODO
         }
 
         #endregion
