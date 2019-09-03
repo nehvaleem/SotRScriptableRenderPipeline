@@ -35,26 +35,60 @@ namespace UnityEditor.Rendering.LookDev
             internal const string k_uss = @"Packages/com.unity.render-pipelines.core/Editor/LookDev/DisplayWindow.uss";
             internal const string k_uss_personal_overload = @"Packages/com.unity.render-pipelines.core/Editor/LookDev/DisplayWindow-PersonalSkin.uss";
 
-            public static readonly GUIContent WindowTitleAndIcon = EditorGUIUtility.TrTextContentWithIcon("Look Dev", CoreEditorUtils.LoadIcon(k_IconFolder, "LookDevMainIcon", forceLowRes: true));
+            internal static readonly GUIContent k_WindowTitleAndIcon = EditorGUIUtility.TrTextContentWithIcon("Look Dev", CoreEditorUtils.LoadIcon(k_IconFolder, "LookDevMainIcon", forceLowRes: true));
+
+            internal static readonly Texture2D k_Layout1Icon = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_Layout1", forceLowRes: true);
+            internal static readonly Texture2D k_Layout2Icon = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_Layout2", forceLowRes: true);
+            internal static readonly Texture2D k_LayoutVerticalIcon = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_LayoutVertical", forceLowRes: true);
+            internal static readonly Texture2D k_LayoutHorizontalIcon = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_LayoutHorizontal", forceLowRes: true);
+            internal static readonly Texture2D k_LayoutStackIcon = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_LayoutCustom", forceLowRes: true);
+
+            internal static readonly Texture2D k_Camera1Icon = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_Camera1", forceLowRes: true);
+            internal static readonly Texture2D k_Camera2Icon = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_Camera2", forceLowRes: true);
+            internal static readonly Texture2D k_LinkIcon = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_Link", forceLowRes: true);
+            internal static readonly Texture2D k_RightIcon = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_Right", forceLowRes: true);
+            internal static readonly Texture2D k_LeftIcon = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_Left", forceLowRes: true);
+
+            internal static readonly Texture2D k_RenderdocIcon = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "renderdoc", forceLowRes: true);
+            internal const string k_RenderDocLabel = " Content";
+
+            internal const string k_CameraMenuSync1On2 = "Align Camera 1 with Camera 2";
+            internal const string k_CameraMenuSync2On1 = "Align Camera 2 with Camera 1";
+            internal const string k_CameraMenuReset = "Reset Cameras";
+            
+            internal const string k_EnvironmentSidePanelName = "Environment";
+            internal const string k_DebugSidePanelName = "Debug";
+
+            internal const string k_DragAndDropObject = "Drag and drop object here";
+            internal const string k_DragAndDropEnvironment = "Drag and drop environment from side panel here";
+
+            // /!\ WARNING:
+            //The following const are used in the uss.
+            //If you change them, update the uss file too.
+            internal const string k_MainContainerName = "mainContainer";
+            internal const string k_ViewContainerName = "viewContainer";
+            internal const string k_FirstViewName = "firstView";
+            internal const string k_SecondViewName = "secondView";
+            internal const string k_ToolbarName = "toolbar";
+            internal const string k_ToolbarRadioName = "toolbarRadio";
+            internal const string k_TabsRadioName = "tabsRadio";
+            internal const string k_SideToolbarName = "sideToolbar";
+            internal const string k_SharedContainerClass = "container";
+            internal const string k_FirstViewClass = "firstView";
+            internal const string k_SecondViewsClass = "secondView";
+            internal const string k_VerticalViewsClass = "verticalSplit";
+            internal const string k_DebugContainerName = "debugContainer";
+            internal const string k_ShowDebugPanelClass = "showDebugPanel";
+
+            internal const string k_EnvironmentContainerName = "environmentContainer";
+            internal const string k_ShowEnvironmentPanelClass = "showEnvironmentPanel";
+
+            internal const string k_CameraMenuName = "cameraMenu";
+            internal const string k_CameraButtonName = "cameraButton";
+            internal const string k_CameraSeparatorName = "cameraSeparator";
+
+            internal const string k_RenderDocContentName = "renderdoc-content";
         }
-        
-        // /!\ WARNING:
-        //The following const are used in the uss.
-        //If you change them, update the uss file too.
-        internal const string k_MainContainerName = "mainContainer";
-        internal const string k_ViewContainerName = "viewContainer";
-        internal const string k_FirstViewName = "firstView";
-        internal const string k_SecondViewName = "secondView";
-        internal const string k_ToolbarName = "toolbar";
-        internal const string k_ToolbarRadioName = "toolbarRadio";
-        internal const string k_TabsRadioName = "tabsRadio";
-        internal const string k_SideToolbarName = "sideToolbar";
-        internal const string k_SharedContainerClass = "container";
-        internal const string k_FirstViewClass = "firstView";
-        internal const string k_SecondViewsClass = "secondView";
-        internal const string k_VerticalViewsClass = "verticalSplit";
-        internal const string k_DebugContainerName = "debugContainer";
-        internal const string k_ShowDebugPanelClass = "showDebugPanel";
 
         VisualElement m_MainContainer;
         VisualElement m_ViewContainer;
@@ -67,32 +101,76 @@ namespace UnityEditor.Rendering.LookDev
         Label m_NoEnvironment2;
 
         Image[] m_Views = new Image[2];
+        
+        LayoutContext layout
+            => LookDev.currentContext.layout;
 
-        Layout layout
+        Layout viewLayout
         {
-            get => LookDev.currentContext.layout.viewLayout;
+            get => layout.viewLayout;
             set
             {
-                if (LookDev.currentContext.layout.viewLayout != value)
+                if (layout.viewLayout != value)
                 {
-                    OnLayoutChangedInternal?.Invoke(value, sidePanel);
+                    OnLayoutChangedInternal?.Invoke(value, layout.showedSidePanel);
                     ApplyLayout(value);
                 }
             }
         }
 
-        SidePanel sidePanel
+        bool environmentSidePanel
         {
-            get => LookDev.currentContext.layout.showedSidePanel;
+            get => (layout.showedSidePanel & SidePanel.Environment) != 0;
             set
             {
-                if (LookDev.currentContext.layout.showedSidePanel != value)
+                bool stored = (layout.showedSidePanel & SidePanel.Environment) != 0;
+                if (value != stored)
                 {
-                    OnLayoutChangedInternal?.Invoke(layout, value);
-                    ApplySidePanelChange(value);
+                    if (value)
+                        layout.showedSidePanel |= SidePanel.Environment;
+                    else
+                        layout.showedSidePanel &= ~SidePanel.Environment;
+                    ApplySidePanelChange(layout.showedSidePanel);
                 }
             }
         }
+
+        bool debugView1SidePanel
+        { 
+            get => (layout.showedSidePanel & SidePanel.DebugView1) != 0;
+            set
+            {
+                bool stored = (layout.showedSidePanel & SidePanel.DebugView1) != 0;
+                if (value != stored)
+                {
+                    if (value)
+                        layout.showedSidePanel |= SidePanel.DebugView1;
+                    else
+                        layout.showedSidePanel &= ~SidePanel.DebugView1;
+                    ApplySidePanelChange(layout.showedSidePanel);
+                }
+            }
+        }
+
+        bool debugView2SidePanel
+        { 
+            get => (layout.showedSidePanel & SidePanel.DebugView2) != 0;
+            set
+            {
+                bool stored = (layout.showedSidePanel & SidePanel.DebugView2) != 0;
+                if (value != stored)
+                {
+                    if (value)
+                        layout.showedSidePanel |= SidePanel.DebugView2;
+                    else
+                        layout.showedSidePanel &= ~SidePanel.DebugView2;
+                    ApplySidePanelChange(layout.showedSidePanel);
+                }
+            }
+        }
+
+        bool debugOneOfViewSidePanel
+            => (layout.showedSidePanel & SidePanel.DebugViewBoth) != 0;
 
         event Action<Layout, SidePanel> OnLayoutChangedInternal;
         event Action<Layout, SidePanel> IViewDisplayer.OnLayoutChanged
@@ -158,7 +236,7 @@ namespace UnityEditor.Rendering.LookDev
             if (!LookDev.open)
                 LookDev.Open();
 
-            titleContent = Style.WindowTitleAndIcon;
+            titleContent = Style.k_WindowTitleAndIcon;
 
             rootVisualElement.styleSheets.Add(
                 AssetDatabase.LoadAssetAtPath<StyleSheet>(Style.k_uss));
@@ -171,8 +249,8 @@ namespace UnityEditor.Rendering.LookDev
 
             CreateToolbar();
 
-            m_MainContainer = new VisualElement() { name = k_MainContainerName };
-            m_MainContainer.AddToClassList(k_SharedContainerClass);
+            m_MainContainer = new VisualElement() { name = Style.k_MainContainerName };
+            m_MainContainer.AddToClassList(Style.k_SharedContainerClass);
             rootVisualElement.Add(m_MainContainer);
 
             CreateViews();
@@ -180,8 +258,8 @@ namespace UnityEditor.Rendering.LookDev
             CreateDebug();
             CreateDropAreas();
 
-            ApplyLayout(layout);
-            ApplySidePanelChange(sidePanel);
+            ApplyLayout(viewLayout);
+            ApplySidePanelChange(layout.showedSidePanel);
         }
 
         void OnDisable() => OnClosedInternal?.Invoke();
@@ -189,21 +267,21 @@ namespace UnityEditor.Rendering.LookDev
         void CreateToolbar()
         {
             // Layout swapper part
-            var layoutRadio = new ToolbarRadio() { name = k_ToolbarRadioName };
+            var layoutRadio = new ToolbarRadio() { name = Style.k_ToolbarRadioName };
             layoutRadio.AddRadios(new[] {
-                CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_Layout1", forceLowRes: true),
-                CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_Layout2", forceLowRes: true),
-                CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_LayoutVertical", forceLowRes: true),
-                CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_LayoutHorizontal", forceLowRes: true),
-                CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_LayoutCustom", forceLowRes: true)
+                Style.k_Layout1Icon,
+                Style.k_Layout2Icon,
+                Style.k_LayoutVerticalIcon,
+                Style.k_LayoutHorizontalIcon,
+                Style.k_LayoutStackIcon,
                 });
             layoutRadio.RegisterCallback((ChangeEvent<int> evt)
-                => layout = (Layout)evt.newValue);
-            layoutRadio.SetValueWithoutNotify((int)layout);
+                => viewLayout = (Layout)evt.newValue);
+            layoutRadio.SetValueWithoutNotify((int)viewLayout);
 
-            var cameraMenu = new ToolbarMenu() { name = "cameraMenu" };
+            var cameraMenu = new ToolbarMenu() { name = Style.k_CameraMenuName };
             cameraMenu.variant = ToolbarMenu.Variant.Popup;
-            var cameraToggle = new ToolbarToggle() { name = "cameraButton" };
+            var cameraToggle = new ToolbarToggle() { name = Style.k_CameraButtonName };
             cameraToggle.value = LookDev.currentContext.cameraSynced;
 
             //Note: when having Image on top of the Toggle nested in the Menu, RegisterValueChangedCallback is not called
@@ -214,24 +292,19 @@ namespace UnityEditor.Rendering.LookDev
                 cameraToggle.SetValueWithoutNotify(LookDev.currentContext.cameraSynced);
             });
 
-            var cameraSeparator = new ToolbarToggle() { name = "cameraSeparator" };
-            var texCamera1 = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_Camera1", forceLowRes: true);
-            var texCamera2 = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_Camera2", forceLowRes: true);
-            var texLink = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_Link", forceLowRes: true);
-            var texRight = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_Right", forceLowRes: true);
-            var texLeft = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDev_Left", forceLowRes: true);
-            cameraToggle.Add(new Image() { image = texCamera1 });
-            cameraToggle.Add(new Image() { image = texLink });
-            cameraToggle.Add(new Image() { image = texCamera2 });
+            var cameraSeparator = new ToolbarToggle() { name = Style.k_CameraSeparatorName };
+            cameraToggle.Add(new Image() { image = Style.k_Camera1Icon });
+            cameraToggle.Add(new Image() { image = Style.k_LinkIcon });
+            cameraToggle.Add(new Image() { image = Style.k_Camera2Icon });
             cameraMenu.Add(cameraToggle);
             cameraMenu.Add(cameraSeparator);
-            cameraMenu.menu.AppendAction("Align Camera 1 with Camera 2",
+            cameraMenu.menu.AppendAction(Style.k_CameraMenuSync1On2,
                 (DropdownMenuAction a) => LookDev.currentContext.SynchronizeCameraStates(ViewIndex.Second),
                 DropdownMenuAction.AlwaysEnabled);
-            cameraMenu.menu.AppendAction("Align Camera 2 with Camera 1",
+            cameraMenu.menu.AppendAction(Style.k_CameraMenuSync2On1,
                 (DropdownMenuAction a) => LookDev.currentContext.SynchronizeCameraStates(ViewIndex.First),
                 DropdownMenuAction.AlwaysEnabled);
-            cameraMenu.menu.AppendAction("Reset Cameras",
+            cameraMenu.menu.AppendAction(Style.k_CameraMenuReset,
                 (DropdownMenuAction a) =>
                 {
                     LookDev.currentContext.GetViewContent(ViewIndex.First).ResetCameraState();
@@ -240,24 +313,44 @@ namespace UnityEditor.Rendering.LookDev
                 DropdownMenuAction.AlwaysEnabled);
 
             // Side part
-            var sideRadio = new ToolbarRadio(canDeselectAll: true) { name = k_TabsRadioName };
-            sideRadio.AddRadios(new[] {
-                "Environment",
-                "Debug"
-            });
-            sideRadio.RegisterCallback((ChangeEvent<int> evt) =>
+            var sideEnvironmentToggle = new ToolbarToggle()
             {
-                sidePanel = (SidePanel)evt.newValue;
-                if (sidePanel == SidePanel.Debug)
-                    RefreshDebugViews();
-            });
-            sideRadio.SetValueWithoutNotify((int)sidePanel);
+                text = Style.k_EnvironmentSidePanelName,
+                name = Style.k_TabsRadioName
+            };
+            sideEnvironmentToggle.SetValueWithoutNotify(environmentSidePanel);
+            sideEnvironmentToggle.RegisterCallback((ChangeEvent<bool> evt)
+                => environmentSidePanel = evt.newValue);
 
-            var sideToolbar = new Toolbar() { name = k_SideToolbarName };
-            sideToolbar.Add(sideRadio);
+            var sideDebugToggleView1 = new ToolbarToggle()
+            {
+                name = Style.k_TabsRadioName
+            };
+            var sideDebugToggleView1Container = sideDebugToggleView1.Q(className:"unity-toggle__input");
+            sideDebugToggleView1Container.Add(new Label(Style.k_DebugSidePanelName));
+            sideDebugToggleView1Container.Add(new Image() { image = Style.k_Camera1Icon });
+            sideDebugToggleView1.SetValueWithoutNotify(debugView1SidePanel);
+            sideDebugToggleView1.RegisterCallback((ChangeEvent<bool> evt)
+                => debugView1SidePanel = evt.newValue);
+
+            var sideDebugToggleView2 = new ToolbarToggle()
+            {
+                name = Style.k_TabsRadioName
+            };
+            var sideDebugToggleView2Container = sideDebugToggleView2.Q(className: "unity-toggle__input");
+            sideDebugToggleView2Container.Add(new Label(Style.k_DebugSidePanelName));
+            sideDebugToggleView2Container.Add(new Image() { image = Style.k_Camera2Icon });
+            sideDebugToggleView2.SetValueWithoutNotify(debugView2SidePanel);
+            sideDebugToggleView2.RegisterCallback((ChangeEvent<bool> evt)
+                => debugView2SidePanel = evt.newValue);
+
+            var sideToolbar = new Toolbar() { name = Style.k_SideToolbarName };
+            sideToolbar.Add(sideEnvironmentToggle);
+            sideToolbar.Add(sideDebugToggleView1);
+            sideToolbar.Add(sideDebugToggleView2);
 
             // Aggregate parts
-            var toolbar = new Toolbar() { name = k_ToolbarName };
+            var toolbar = new Toolbar() { name = Style.k_ToolbarName };
             toolbar.Add(layoutRadio);
             toolbar.Add(new ToolbarSpacer());
             toolbar.Add(cameraMenu);
@@ -267,13 +360,10 @@ namespace UnityEditor.Rendering.LookDev
             {
                 var renderDocButton = new ToolbarButton(() => OnRenderDocAcquisitionTriggeredInternal?.Invoke())
                 {
-                    name = "renderdoc-content"
+                    name = Style.k_RenderDocContentName
                 };
-                renderDocButton.Add(new Image()
-                {
-                    image = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "renderdoc", forceLowRes: true)
-                });
-                renderDocButton.Add(new Label() { text = " Content" });
+                renderDocButton.Add(new Image() { image = Style.k_RenderdocIcon });
+                renderDocButton.Add(new Label() { text = Style.k_RenderDocLabel });
                 toolbar.Add(renderDocButton);
             }
             toolbar.Add(sideToolbar);
@@ -285,17 +375,17 @@ namespace UnityEditor.Rendering.LookDev
             if (m_MainContainer == null || m_MainContainer.Equals(null))
                 throw new System.MemberAccessException("m_MainContainer should be assigned prior CreateViews()");
 
-            m_ViewContainer = new VisualElement() { name = k_ViewContainerName };
-            m_ViewContainer.AddToClassList(LookDev.currentContext.layout.isMultiView ? k_SecondViewsClass : k_FirstViewClass);
-            m_ViewContainer.AddToClassList(k_SharedContainerClass);
+            m_ViewContainer = new VisualElement() { name = Style.k_ViewContainerName };
+            m_ViewContainer.AddToClassList(LookDev.currentContext.layout.isMultiView ? Style.k_SecondViewsClass : Style.k_FirstViewClass);
+            m_ViewContainer.AddToClassList(Style.k_SharedContainerClass);
             m_MainContainer.Add(m_ViewContainer);
             m_ViewContainer.RegisterCallback<MouseDownEvent>(evt => OnMouseEventInViewPortInternal?.Invoke(evt));
             m_ViewContainer.RegisterCallback<MouseUpEvent>(evt => OnMouseEventInViewPortInternal?.Invoke(evt));
             m_ViewContainer.RegisterCallback<MouseMoveEvent>(evt => OnMouseEventInViewPortInternal?.Invoke(evt));
 
-            m_Views[(int)ViewIndex.First] = new Image() { name = k_FirstViewName, image = Texture2D.blackTexture };
+            m_Views[(int)ViewIndex.First] = new Image() { name = Style.k_FirstViewName, image = Texture2D.blackTexture };
             m_ViewContainer.Add(m_Views[(int)ViewIndex.First]);
-            m_Views[(int)ViewIndex.Second] = new Image() { name = k_SecondViewName, image = Texture2D.blackTexture };
+            m_Views[(int)ViewIndex.Second] = new Image() { name = Style.k_SecondViewName, image = Texture2D.blackTexture };
             m_ViewContainer.Add(m_Views[(int)ViewIndex.Second]);
 
             var firstOrCompositeManipulator = new SwitchableCameraController(
@@ -306,7 +396,7 @@ namespace UnityEditor.Rendering.LookDev
                 {
                     LookDev.currentContext.SetFocusedCamera(index);
                     var environment = LookDev.currentContext.GetViewContent(index).environment;
-                    if (sidePanel == SidePanel.Environment && environment != null)
+                    if (environmentSidePanel && environment != null)
                         m_EnvironmentList.selectedIndex = LookDev.currentContext.environmentLibrary.IndexOf(environment);
                 });
             var secondManipulator = new CameraController(
@@ -316,7 +406,7 @@ namespace UnityEditor.Rendering.LookDev
                 {
                     LookDev.currentContext.SetFocusedCamera(ViewIndex.Second);
                     var environment = LookDev.currentContext.GetViewContent(ViewIndex.Second).environment;
-                    if (sidePanel == SidePanel.Environment && environment != null)
+                    if (environmentSidePanel && environment != null)
                         m_EnvironmentList.selectedIndex = LookDev.currentContext.environmentLibrary.IndexOf(environment);
                 });
             var gizmoManipulator = new ComparisonGizmoController(LookDev.currentContext.layout.gizmoState, firstOrCompositeManipulator);
@@ -324,16 +414,16 @@ namespace UnityEditor.Rendering.LookDev
             m_Views[(int)ViewIndex.First].AddManipulator(firstOrCompositeManipulator);
             m_Views[(int)ViewIndex.Second].AddManipulator(secondManipulator);
 
-            m_NoObject1 = new Label("Drag'n'drop object here");
+            m_NoObject1 = new Label(Style.k_DragAndDropObject);
             m_NoObject1.style.flexGrow = 1;
             m_NoObject1.style.unityTextAlign = TextAnchor.MiddleCenter;
-            m_NoObject2 = new Label("Drag'n'drop object here");
+            m_NoObject2 = new Label(Style.k_DragAndDropObject);
             m_NoObject2.style.flexGrow = 1;
             m_NoObject2.style.unityTextAlign = TextAnchor.MiddleCenter;
-            m_NoEnvironment1 = new Label("Drag'n'drop environment from side panel here");
+            m_NoEnvironment1 = new Label(Style.k_DragAndDropEnvironment);
             m_NoEnvironment1.style.flexGrow = 1;
             m_NoEnvironment1.style.unityTextAlign = TextAnchor.MiddleCenter;
-            m_NoEnvironment2 = new Label("Drag'n'drop environment from side panel here");
+            m_NoEnvironment2 = new Label(Style.k_DragAndDropEnvironment);
             m_NoEnvironment2.style.flexGrow = 1;
             m_NoEnvironment2.style.unityTextAlign = TextAnchor.MiddleCenter;
             m_Views[(int)ViewIndex.First].Add(m_NoObject1);
@@ -347,7 +437,7 @@ namespace UnityEditor.Rendering.LookDev
             // GameObject or Prefab in view
             new DropArea(new[] { typeof(GameObject) }, m_Views[(int)ViewIndex.First], (obj, localPos) =>
             {
-                if (layout == Layout.CustomSplit)
+                if (viewLayout == Layout.CustomSplit)
                     OnChangingObjectInViewInternal?.Invoke(obj as GameObject, ViewCompositionIndex.Composite, localPos);
                 else
                     OnChangingObjectInViewInternal?.Invoke(obj as GameObject, ViewCompositionIndex.First, localPos);
@@ -373,7 +463,7 @@ namespace UnityEditor.Rendering.LookDev
             // Environment in view
             new DropArea(new[] { typeof(Environment), typeof(Cubemap) }, m_Views[(int)ViewIndex.First], (obj, localPos) =>
             {
-                if (layout == Layout.CustomSplit)
+                if (viewLayout == Layout.CustomSplit)
                     OnChangingEnvironmentInViewInternal?.Invoke(obj, ViewCompositionIndex.Composite, localPos);
                 else
                     OnChangingEnvironmentInViewInternal?.Invoke(obj, ViewCompositionIndex.First, localPos);
@@ -468,33 +558,33 @@ namespace UnityEditor.Rendering.LookDev
             {
                 case Layout.HorizontalSplit:
                 case Layout.VerticalSplit:
-                    if (!m_ViewContainer.ClassListContains(k_FirstViewClass))
-                        m_ViewContainer.AddToClassList(k_FirstViewClass);
-                    if (!m_ViewContainer.ClassListContains(k_SecondViewsClass))
-                        m_ViewContainer.AddToClassList(k_SecondViewsClass);
+                    if (!m_ViewContainer.ClassListContains(Style.k_FirstViewClass))
+                        m_ViewContainer.AddToClassList(Style.k_FirstViewClass);
+                    if (!m_ViewContainer.ClassListContains(Style.k_SecondViewsClass))
+                        m_ViewContainer.AddToClassList(Style.k_SecondViewsClass);
                     if (value == Layout.VerticalSplit)
                     {
-                        m_ViewContainer.AddToClassList(k_VerticalViewsClass);
-                        if (!m_ViewContainer.ClassListContains(k_VerticalViewsClass))
-                            m_ViewContainer.AddToClassList(k_FirstViewClass);
+                        m_ViewContainer.AddToClassList(Style.k_VerticalViewsClass);
+                        if (!m_ViewContainer.ClassListContains(Style.k_VerticalViewsClass))
+                            m_ViewContainer.AddToClassList(Style.k_FirstViewClass);
                     }
                     for (int i = 0; i < 2; ++i)
                         m_Views[i].style.display = DisplayStyle.Flex;
                     break;
                 case Layout.FullFirstView:
                 case Layout.CustomSplit:       //display composition on first rect
-                    if (!m_ViewContainer.ClassListContains(k_FirstViewClass))
-                        m_ViewContainer.AddToClassList(k_FirstViewClass);
-                    if (m_ViewContainer.ClassListContains(k_SecondViewsClass))
-                        m_ViewContainer.RemoveFromClassList(k_SecondViewsClass);
+                    if (!m_ViewContainer.ClassListContains(Style.k_FirstViewClass))
+                        m_ViewContainer.AddToClassList(Style.k_FirstViewClass);
+                    if (m_ViewContainer.ClassListContains(Style.k_SecondViewsClass))
+                        m_ViewContainer.RemoveFromClassList(Style.k_SecondViewsClass);
                     m_Views[0].style.display = DisplayStyle.Flex;
                     m_Views[1].style.display = DisplayStyle.None;
                     break;
                 case Layout.FullSecondView:
-                    if (m_ViewContainer.ClassListContains(k_FirstViewClass))
-                        m_ViewContainer.RemoveFromClassList(k_FirstViewClass);
-                    if (!m_ViewContainer.ClassListContains(k_SecondViewsClass))
-                        m_ViewContainer.AddToClassList(k_SecondViewsClass);
+                    if (m_ViewContainer.ClassListContains(Style.k_FirstViewClass))
+                        m_ViewContainer.RemoveFromClassList(Style.k_FirstViewClass);
+                    if (!m_ViewContainer.ClassListContains(Style.k_SecondViewsClass))
+                        m_ViewContainer.AddToClassList(Style.k_SecondViewsClass);
                     m_Views[0].style.display = DisplayStyle.None;
                     m_Views[1].style.display = DisplayStyle.Flex;
                     break;
@@ -504,45 +594,45 @@ namespace UnityEditor.Rendering.LookDev
 
             //Add flex direction here
             if (value == Layout.VerticalSplit)
-                m_ViewContainer.AddToClassList(k_VerticalViewsClass);
-            else if (m_ViewContainer.ClassListContains(k_VerticalViewsClass))
-                m_ViewContainer.RemoveFromClassList(k_VerticalViewsClass);
+                m_ViewContainer.AddToClassList(Style.k_VerticalViewsClass);
+            else if (m_ViewContainer.ClassListContains(Style.k_VerticalViewsClass))
+                m_ViewContainer.RemoveFromClassList(Style.k_VerticalViewsClass);
         }
 
         void ApplySidePanelChange(SidePanel sidePanel)
         {
-            switch (sidePanel)
+            IStyle GetEnvironmentContenairDraggerStyle()
+                => m_EnvironmentContainer.Q(className: "unity-base-slider--vertical").Q("unity-dragger").style;
+
+            if (environmentSidePanel)
             {
-                case SidePanel.None:
-                    if (m_MainContainer.ClassListContains(k_ShowEnvironmentPanelClass))
-                        m_MainContainer.RemoveFromClassList(k_ShowEnvironmentPanelClass);
-                    if (m_MainContainer.ClassListContains(k_ShowDebugPanelClass))
-                        m_MainContainer.RemoveFromClassList(k_ShowDebugPanelClass);
-                    m_EnvironmentContainer.Q<EnvironmentElement>().style.visibility = Visibility.Hidden;
-                    m_EnvironmentContainer.Q(className: "unity-base-slider--vertical").Q("unity-dragger").style.display = DisplayStyle.None;
-                    m_EnvironmentContainer.style.display = DisplayStyle.None;
-                    break;
-                case SidePanel.Environment:
-                    if (!m_MainContainer.ClassListContains(k_ShowEnvironmentPanelClass))
-                        m_MainContainer.AddToClassList(k_ShowEnvironmentPanelClass);
-                    if (m_MainContainer.ClassListContains(k_ShowDebugPanelClass))
-                        m_MainContainer.RemoveFromClassList(k_ShowDebugPanelClass);
-                    if (m_EnvironmentList.selectedIndex != -1)
-                        m_EnvironmentContainer.Q<EnvironmentElement>().style.visibility = Visibility.Visible;
-                    m_EnvironmentContainer.Q(className: "unity-base-slider--vertical").Q("unity-dragger").style.display = DisplayStyle.Flex;
-                    m_EnvironmentContainer.style.display = DisplayStyle.Flex;
-                    break;
-                case SidePanel.Debug:
-                    if (m_MainContainer.ClassListContains(k_ShowEnvironmentPanelClass))
-                        m_MainContainer.RemoveFromClassList(k_ShowEnvironmentPanelClass);
-                    if (!m_MainContainer.ClassListContains(k_ShowDebugPanelClass))
-                        m_MainContainer.AddToClassList(k_ShowDebugPanelClass);
-                    m_EnvironmentContainer.Q<EnvironmentElement>().style.visibility = Visibility.Hidden;
-                    m_EnvironmentContainer.Q(className: "unity-base-slider--vertical").Q("unity-dragger").style.display = DisplayStyle.None;
-                    m_EnvironmentContainer.style.display = DisplayStyle.None;
-                    break;
-                default:
-                    throw new ArgumentException("Unknown SidePanel");
+                if (!m_MainContainer.ClassListContains(Style.k_ShowEnvironmentPanelClass))
+                    m_MainContainer.AddToClassList(Style.k_ShowEnvironmentPanelClass);
+
+                if (m_EnvironmentList.selectedIndex != -1)
+                    m_EnvironmentContainer.Q<EnvironmentElement>().style.visibility = Visibility.Visible;
+                GetEnvironmentContenairDraggerStyle().display = DisplayStyle.Flex;
+                m_EnvironmentContainer.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+                if (m_MainContainer.ClassListContains(Style.k_ShowEnvironmentPanelClass))
+                    m_MainContainer.RemoveFromClassList(Style.k_ShowEnvironmentPanelClass);
+
+                m_EnvironmentContainer.Q<EnvironmentElement>().style.visibility = Visibility.Hidden;
+                GetEnvironmentContenairDraggerStyle().display = DisplayStyle.None;
+                m_EnvironmentContainer.style.display = DisplayStyle.None;
+            }
+
+            if (debugOneOfViewSidePanel)
+            {
+                if (!m_MainContainer.ClassListContains(Style.k_ShowDebugPanelClass))
+                    m_MainContainer.AddToClassList(Style.k_ShowDebugPanelClass);
+            }
+            else
+            {
+                if (m_MainContainer.ClassListContains(Style.k_ShowDebugPanelClass))
+                    m_MainContainer.RemoveFromClassList(Style.k_ShowDebugPanelClass);
             }
         }
 

@@ -37,13 +37,15 @@ namespace UnityEditor.Rendering.LookDev
     }
 
     /// <summary>
-    /// Statis of the side panel of the LookDev window
+    /// Status of the side panel of the LookDev window
     /// </summary>
+    [Flags]
     public enum SidePanel
     {
-        None = -1,
-        Environment,
-        Debug
+        Environment = 1,
+        DebugView1 = 2,
+        DebugView2 = 4,
+        DebugViewBoth = 6,
     }
 
     /// <summary>
@@ -199,7 +201,7 @@ namespace UnityEditor.Rendering.LookDev
 
         [SerializeField]
         internal ComparisonGizmoState gizmoState = new ComparisonGizmoState();
-        
+
         internal bool isSimpleView => viewLayout == Layout.FullFirstView || viewLayout == Layout.FullSecondView;
         internal bool isMultiView => viewLayout == Layout.HorizontalSplit || viewLayout == Layout.VerticalSplit;
         internal bool isCombinedView => viewLayout == Layout.CustomSplit;

@@ -16,12 +16,6 @@ namespace UnityEditor.Rendering.LookDev
     
     partial class DisplayWindow : IEnvironmentDisplayer
     {
-        // /!\ WARNING:
-        //The following const are used in the uss.
-        //If you change them, update the uss file too.
-        const string k_EnvironmentContainerName = "environmentContainer";
-        const string k_ShowEnvironmentPanelClass = "showEnvironmentPanel";
-        
         VisualElement m_EnvironmentContainer;
         ListView m_EnvironmentList;
         EnvironmentElement m_EnvironmentInspector;
@@ -56,10 +50,10 @@ namespace UnityEditor.Rendering.LookDev
             if (m_MainContainer == null || m_MainContainer.Equals(null))
                 throw new System.MemberAccessException("m_MainContainer should be assigned prior CreateEnvironment()");
 
-            m_EnvironmentContainer = new VisualElement() { name = k_EnvironmentContainerName };
+            m_EnvironmentContainer = new VisualElement() { name = Style.k_EnvironmentContainerName };
             m_MainContainer.Add(m_EnvironmentContainer);
-            if (sidePanel == SidePanel.Environment)
-                m_MainContainer.AddToClassList(k_ShowEnvironmentPanelClass);
+            if (environmentSidePanel)
+                m_MainContainer.AddToClassList(Style.k_ShowEnvironmentPanelClass);
 
             m_EnvironmentInspector = new EnvironmentElement(withPreview: false, () =>
             {
@@ -264,7 +258,7 @@ namespace UnityEditor.Rendering.LookDev
             Environment environment = LookDev.currentContext.environmentLibrary[context.draggedIndex];
             if (m_Views[(int)ViewIndex.First].ContainsPoint(mouseWorldPosition))
             {
-                if (layout == Layout.CustomSplit)
+                if (viewLayout == Layout.CustomSplit)
                     OnChangingEnvironmentInViewInternal?.Invoke(environment, ViewCompositionIndex.Composite, mouseWorldPosition);
                 else
                     OnChangingEnvironmentInViewInternal?.Invoke(environment, ViewCompositionIndex.First, mouseWorldPosition);

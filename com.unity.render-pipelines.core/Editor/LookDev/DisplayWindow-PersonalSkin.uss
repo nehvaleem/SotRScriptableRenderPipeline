@@ -32,3 +32,13 @@ Image.unity-list-view__item:selected
 {
     border-color: #3A72B0;
 }
+
+#environmentContainer
+{
+    border-color: #999999;
+}
+
+#debugContainer
+{
+    border-color: #999999;
+}
