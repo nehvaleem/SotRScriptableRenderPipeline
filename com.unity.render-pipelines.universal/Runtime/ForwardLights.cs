@@ -1,9 +1,12 @@
 using UnityEngine.Experimental.GlobalIllumination;
 using Unity.Collections;
 
-namespace UnityEngine.Rendering.Universal
+namespace UnityEngine.Rendering.Universal.Internal
 {
-    internal class ForwardLights
+    /// <summary>
+    /// Computes and submit lighting data to GPU.
+    /// </summary>
+    public class ForwardLights
     {
         static class LightConstantBuffer
         {
