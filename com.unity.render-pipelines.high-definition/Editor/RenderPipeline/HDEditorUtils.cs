@@ -50,40 +50,6 @@ namespace UnityEditor.Rendering.HighDefinition
         internal static T LoadAsset<T>(string relativePath) where T : UnityEngine.Object
             => AssetDatabase.LoadAssetAtPath<T>(HDUtils.GetHDRenderPipelinePath() + relativePath);
 
-        const string kMaterialFilter = "t:Material";
-
-        internal static void UpdateShaderGraphMaterials(Shader shader)
-        {
-            // Iterate all Materials
-            string[] materialGuids = AssetDatabase.FindAssets(kMaterialFilter);
-            try
-            {
-                for(int i = 0, length = materialGuids.Length; i < length; i++)
-                {
-                    // Only update progress bar every 10 materials
-                    if(i % 10 == 9)
-                    {
-                        EditorUtility.DisplayProgressBar(
-                            "Updating dependent materials...",
-                            string.Format("{0} / {1} materials updated.", i, length),
-                            i / (float)(length - 1));
-                    }
-                    
-                    // Get Material object
-                    string materialPath = AssetDatabase.GUIDToAssetPath(materialGuids[i]);
-                    Material material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
-
-                    // Reset keywords
-                    if(material.shader.name == shader.name)
-                        ResetMaterialKeywords(material);
-                }
-            }
-            finally
-            {
-                EditorUtility.ClearProgressBar();
-            }
-        }
-
         /// <summary>
         /// Reset the dedicated Keyword and Pass regarding the shader kind.
         /// Also re-init the drawers and set the material dirty for the engine.
