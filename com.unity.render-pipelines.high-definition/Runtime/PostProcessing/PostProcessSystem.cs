@@ -535,6 +535,13 @@ namespace UnityEngine.Rendering.HighDefinition
                         DoShadowOfTheRoadOutline(cmd, camera, source, destination, depthBuffer);
                         PoolSource(ref source, destination);
                     }
+
+                    /*if (m_FogOfWar.IsActive())
+                    {
+                        var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
+                        DoShadowOfTheRoadFogOfWar(cmd, camera, source, destination, depthBuffer);
+                        PoolSource(ref source, destination);
+                    }*/
                 }
 
                 // TODO: User effects go here
@@ -2230,7 +2237,20 @@ namespace UnityEngine.Rendering.HighDefinition
 
         void DoShadowOfTheRoadOutline(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, RTHandle depthBuffer)
         {
-            m_OutlineMaterial.SetVector(Shader.PropertyToID("_outlineColor"), m_Outline.outlineColor.value);
+            Matrix4x4 projMat = GL.GetGPUProjectionMatrix(camera.camera.projectionMatrix, false);
+            projMat[15] = projMat[14] = projMat[11] = 0;
+            ++projMat[15];
+
+            m_OutlineMaterial.SetMatrix(Shader.PropertyToID("_projMat"), Matrix4x4.Inverse(projMat * camera.camera.worldToCameraMatrix) * Matrix4x4.TRS(new Vector3(0, 0, -1 * projMat[10]), Quaternion.identity, Vector3.one));
+            m_OutlineMaterial.SetInt(Shader.PropertyToID("_isDebugMode"), m_Outline.isDebugMode.value ? 1 : 0);
+            m_OutlineMaterial.SetInt(Shader.PropertyToID("_useScreen"), m_Outline.useScreen.value ? 1 : 0);
+            m_OutlineMaterial.SetFloat(Shader.PropertyToID("_cavityBrightness"), m_Outline.cavityBrightness.value);
+            m_OutlineMaterial.SetFloat(Shader.PropertyToID("_cavityContrast"), m_Outline.cavityContrast.value);
+            m_OutlineMaterial.SetFloat(Shader.PropertyToID("_distanceBrightness"), m_Outline.distanceBrightness.value);
+            m_OutlineMaterial.SetFloat(Shader.PropertyToID("_distanceContrast"), m_Outline.distanceContrast.value);
+            m_OutlineMaterial.SetColor(Shader.PropertyToID("_outlineColor"), m_Outline.outlineColor.value);
+            m_OutlineMaterial.SetFloat(Shader.PropertyToID("_thickness"), m_Outline.thickness.value);
+
             HDUtils.DrawFullScreen(cmd, m_OutlineMaterial, destination);
         }
 
@@ -2240,8 +2260,15 @@ namespace UnityEngine.Rendering.HighDefinition
 
         void DoShadowOfTheRoadFogOfWar(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, RTHandle depthBuffer)
         {
-            m_FogOfWarMaterial.SetVector(Shader.PropertyToID("_outlineColor"), m_FogOfWar.placeholderParameter.value);
-            HDUtils.DrawFullScreen(cmd, m_OutlineMaterial, destination);
+            m_FogOfWarMaterial.SetColor(Shader.PropertyToID("_fogColor"), m_FogOfWar.fogColor.value);
+            m_FogOfWarMaterial.SetTexture(Shader.PropertyToID("map"), m_FogOfWar.map.value);
+            m_FogOfWarMaterial.SetColor(Shader.PropertyToID("_mapTint"), m_FogOfWar.mapTint.value);
+            m_FogOfWarMaterial.SetFloat(Shader.PropertyToID("_mapScale"), m_FogOfWar.mapScale.value);
+            m_FogOfWarMaterial.SetFloat(Shader.PropertyToID("_mapPositionX"), m_FogOfWar.mapPosition.value.x);
+            m_FogOfWarMaterial.SetFloat(Shader.PropertyToID("_mapPositionY"), m_FogOfWar.mapPosition.value.y);
+            m_FogOfWarMaterial.SetInt(Shader.PropertyToID("iterations"), m_FogOfWar.iterations.value);
+
+            HDUtils.DrawFullScreen(cmd, m_FogOfWarMaterial, destination);
         }
 
         #endregion
