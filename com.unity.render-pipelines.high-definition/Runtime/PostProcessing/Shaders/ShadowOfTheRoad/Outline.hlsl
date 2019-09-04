@@ -8,6 +8,7 @@
 
 float4 _outlineColor;
 uniform float4x4 _projMat;
+float _offset;
 
 struct Attributes
 {
@@ -37,13 +38,17 @@ Varyings Vert(Attributes input)
 
 float3 Frag(Varyings input) : SV_Target
 {
-    float depth = LoadCameraDepth(input.positionCS.xy);
+    float depth = LoadCameraDepth(input.positionCS.xy/* + float2(sin(_offset) * 200, 0)*/);
 
     PositionInputs posInput = GetPositionInput(input.positionCS.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V);
 
     BSDFData bsdfData;
     BuiltinData builtinData;
     DECODE_FROM_GBUFFER(posInput.positionSS, UINT_MAX, bsdfData, builtinData);
+
+    NormalData normalData;
+    float4 normalBuffer = LOAD_TEXTURE2D_X(_NormalBufferTexture, posInput.positionSS/* + float2(sin(_offset) * 200, 0)*/);
+    DecodeFromNormalBuffer(normalBuffer, posInput.positionSS, normalData);
 
     //
     // available data
@@ -69,6 +74,7 @@ float3 Frag(Varyings input) : SV_Target
     //result = builtinData.bakeDiffuseLighting;
     //result *= exp2(_DebugExposure);
     //result = bsdfData.ambientOcclusion;
+    return position;
 
-    return normalsWS;
+    //return normalsWS;
 }

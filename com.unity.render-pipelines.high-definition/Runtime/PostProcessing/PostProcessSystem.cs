@@ -2250,6 +2250,7 @@ namespace UnityEngine.Rendering.HighDefinition
             m_OutlineMaterial.SetFloat(Shader.PropertyToID("_distanceContrast"), m_Outline.distanceContrast.value);
             m_OutlineMaterial.SetColor(Shader.PropertyToID("_outlineColor"), m_Outline.outlineColor.value);
             m_OutlineMaterial.SetFloat(Shader.PropertyToID("_thickness"), m_Outline.thickness.value);
+            m_OutlineMaterial.SetFloat(Shader.PropertyToID("_offset"), Time.time);
 
             HDUtils.DrawFullScreen(cmd, m_OutlineMaterial, destination);
         }
