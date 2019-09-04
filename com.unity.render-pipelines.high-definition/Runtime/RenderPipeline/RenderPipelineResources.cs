@@ -234,6 +234,12 @@ namespace UnityEngine.Rendering.HighDefinition
             [Reload("Runtime/PostProcessing/Shaders/CopyTAAHistory.compute")]
             public ComputeShader CopyTAAHistoryCS;
 
+            // Shadow of the Road
+            [Reload("Runtime/PostProcessing/Shaders/ShadowOfTheRoad/Outline.shader")]
+            public Shader outlineShader;
+            [Reload("Runtime/PostProcessing/Shaders/ShadowOfTheRoad/FogOfWar.shader")]
+            public Shader fogOfWarShader;
+
             // Iterator to retrieve all compute shaders in reflection so we don't have to keep a list of
             // used compute shaders up to date (prefer editor-only usage)
             public IEnumerable<ComputeShader> GetAllComputeShaders()

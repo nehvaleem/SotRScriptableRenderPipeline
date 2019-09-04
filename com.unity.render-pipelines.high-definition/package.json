@@ -4,7 +4,7 @@
     "version": "7.0.1",
     "unity": "2019.3",
     "unityRelease": "0a12",
-    "displayName": "High Definition RP",
+    "displayName": "Shadow of the Road RP",
     "dependencies": {
         "com.unity.render-pipelines.core": "7.0.1",
         "com.unity.shadergraph": "7.0.1",

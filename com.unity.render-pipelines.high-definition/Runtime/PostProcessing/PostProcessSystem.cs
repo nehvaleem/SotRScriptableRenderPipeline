@@ -28,6 +28,8 @@ namespace UnityEngine.Rendering.HighDefinition
         Material m_ClearBlackMaterial;
         Material m_SMAAMaterial;
         Material m_TemporalAAMaterial;
+        Material m_OutlineMaterial;
+        Material m_FogOfWarMaterial;
 
         MaterialPropertyBlock m_TAAHistoryBlitPropertyBlock = new MaterialPropertyBlock();
         MaterialPropertyBlock m_TAAPropertyBlock = new MaterialPropertyBlock();
@@ -95,6 +97,10 @@ namespace UnityEngine.Rendering.HighDefinition
         bool m_DitheringFS;
         bool m_AntialiasingFS;
 
+        // Shadow of the Road components
+        Outline m_Outline;
+        FogOfWar m_FogOfWar;
+
         // Physical camera ref
         HDPhysicalCamera m_PhysicalCamera;
         static readonly HDPhysicalCamera m_DefaultPhysicalCamera = new HDPhysicalCamera();
@@ -128,6 +134,10 @@ namespace UnityEngine.Rendering.HighDefinition
             m_ClearBlackMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.clearBlackPS);
             m_SMAAMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.SMAAPS);
             m_TemporalAAMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.temporalAntialiasingPS);
+
+            // Shadow of the Road Materials
+            m_OutlineMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.outlineShader);
+            m_FogOfWarMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.fogOfWarShader);
 
             // Some compute shaders fail on specific hardware or vendors so we'll have to use a
             // safer but slower code path for them
@@ -227,6 +237,9 @@ namespace UnityEngine.Rendering.HighDefinition
             CoreUtils.SafeRelease(m_NearBokehTileList);
             CoreUtils.SafeRelease(m_FarBokehTileList);
 
+            CoreUtils.Destroy(m_OutlineMaterial);
+            CoreUtils.Destroy(m_FogOfWarMaterial);
+
             m_EmptyExposureTexture      = null;
             m_TempTexture1024           = null;
             m_TempTexture32             = null;
@@ -240,6 +253,9 @@ namespace UnityEngine.Rendering.HighDefinition
             m_BokehIndirectCmd          = null;
             m_NearBokehTileList         = null;
             m_FarBokehTileList          = null;
+
+            m_OutlineMaterial           = null;
+            m_FogOfWarMaterial          = null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -275,6 +291,10 @@ namespace UnityEngine.Rendering.HighDefinition
             m_ShadowsMidtonesHighlights = stack.GetComponent<ShadowsMidtonesHighlights>();
             m_Curves                    = stack.GetComponent<ColorCurves>();
             m_FilmGrain                 = stack.GetComponent<FilmGrain>();
+
+            // Shadow of the Road custom image effects
+            m_Outline                   = stack.GetComponent<Outline>();
+            m_FogOfWar                  = stack.GetComponent<FogOfWar>();
 
             // Prefetch frame settings - these aren't free to pull so we want to do it only once
             // per frame
@@ -503,6 +523,16 @@ namespace UnityEngine.Rendering.HighDefinition
                         if (bloomActive) m_Pool.Recycle(m_BloomTexture);
                         m_BloomTexture = null;
 
+                        PoolSource(ref source, destination);
+                    }
+                }
+
+                if (m_PostProcessEnabled)
+                {
+                    if (m_Outline.IsActive())
+                    {
+                        var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
+                        DoShadowOfTheRoadOutline(cmd, camera, source, destination, depthBuffer);
                         PoolSource(ref source, destination);
                     }
                 }
@@ -782,7 +812,7 @@ namespace UnityEngine.Rendering.HighDefinition
             CoreUtils.SetRenderTarget(cmd, destination, depthBuffer);
             cmd.DrawProcedural(Matrix4x4.identity, m_TemporalAAMaterial, 0, MeshTopology.Triangles, 3, 1, m_TAAPropertyBlock);
 
-            // Copy history. 
+            // Copy history.
             var cs = m_Resources.shaders.CopyTAAHistoryCS;
             var kernel = cs.FindKernel("CopyTAAHistory");
 
@@ -2192,6 +2222,26 @@ namespace UnityEngine.Rendering.HighDefinition
             // -----------------------------------------------------------------------------
             m_Pool.Recycle(SMAAEdgeTex);
             m_Pool.Recycle(SMAABlendTex);
+        }
+
+        #endregion
+
+        #region Shadow of the Road/Outline
+
+        void DoShadowOfTheRoadOutline(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, RTHandle depthBuffer)
+        {
+            m_OutlineMaterial.SetVector(Shader.PropertyToID("_outlineColor"), m_Outline.outlineColor.value);
+            HDUtils.DrawFullScreen(cmd, m_OutlineMaterial, destination);
+        }
+
+        #endregion
+
+        #region Shadow of the Road/Fog of War
+
+        void DoShadowOfTheRoadFogOfWar(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, RTHandle depthBuffer)
+        {
+            m_FogOfWarMaterial.SetVector(Shader.PropertyToID("_outlineColor"), m_FogOfWar.placeholderParameter.value);
+            HDUtils.DrawFullScreen(cmd, m_OutlineMaterial, destination);
         }
 
         #endregion
