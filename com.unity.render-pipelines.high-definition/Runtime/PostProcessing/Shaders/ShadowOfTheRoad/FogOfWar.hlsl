@@ -76,7 +76,7 @@ float3 Frag(Varyings input) : SV_Target
     //result *= exp2(_DebugExposure);
     //result = bsdfData.ambientOcclusion;
     float3 outColor = LOAD_TEXTURE2D_X(_InputTexture, posInput.positionSS).xyz;
-    return outColor;
+    return outColor * 0.1;
 
     //return normalsWS;
 }

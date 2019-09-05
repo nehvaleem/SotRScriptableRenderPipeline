@@ -531,17 +531,17 @@ namespace UnityEngine.Rendering.HighDefinition
                 {
                     if (m_Outline.IsActive())
                     {
-                        var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
-                        DoShadowOfTheRoadOutline(cmd, camera, source, destination, depthBuffer, flipY);
-                        PoolSource(ref source, destination);
+                        var destination1 = m_Pool.Get(Vector2.one, k_ColorFormat);
+                        DoShadowOfTheRoadOutline(cmd, camera, source, destination1, depthBuffer, flipY);
+                        PoolSource(ref source, destination1);
                     }
 
-                    /*if (m_FogOfWar.IsActive())
+                    if (m_FogOfWar.IsActive())
                     {
-                        var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
-                        DoShadowOfTheRoadFogOfWar(cmd, camera, source, destination, depthBuffer, flipY);
-                        PoolSource(ref source, destination);
-                    }*/
+                        var destination2 = m_Pool.Get(Vector2.one, k_ColorFormat);
+                        DoShadowOfTheRoadFogOfWar(cmd, camera, source, destination2, depthBuffer, flipY);
+                        PoolSource(ref source, destination2);
+                    }
                 }
 
                 // TODO: User effects go here
@@ -2271,8 +2271,8 @@ namespace UnityEngine.Rendering.HighDefinition
             projMat[15] = projMat[14] = projMat[11] = 0;
             ++projMat[15];
 
-            m_OutlineMaterial.SetTexture(HDShaderIDs._InputTexture, source);
-            m_OutlineMaterial.SetMatrix(Shader.PropertyToID("_projMat"), Matrix4x4.Inverse(projMat * camera.camera.worldToCameraMatrix) * Matrix4x4.TRS(new Vector3(0, 0, -1 * projMat[10]), Quaternion.identity, Vector3.one));
+            m_FogOfWarMaterial.SetTexture(HDShaderIDs._InputTexture, source);
+            m_FogOfWarMaterial.SetMatrix(Shader.PropertyToID("_projMat"), Matrix4x4.Inverse(projMat * camera.camera.worldToCameraMatrix) * Matrix4x4.TRS(new Vector3(0, 0, -1 * projMat[10]), Quaternion.identity, Vector3.one));
             m_FogOfWarMaterial.SetColor(Shader.PropertyToID("_fogColor"), m_FogOfWar.fogColor.value);
             m_FogOfWarMaterial.SetTexture(Shader.PropertyToID("map"), m_FogOfWar.map.value);
             m_FogOfWarMaterial.SetColor(Shader.PropertyToID("_mapTint"), m_FogOfWar.mapTint.value);
