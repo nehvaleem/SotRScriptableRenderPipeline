@@ -12,7 +12,6 @@ float4 _mapTint;
 float _mapScale;
 float _mapPositionX;
 float _mapPositionY;
-float _mapScale;
 int _iterations;
 
 TEXTURE2D_X(_InputTexture);
