@@ -6,10 +6,17 @@
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
 
-float4 _outlineColor;
 uniform float4x4 _projMat;
-float _offset;
+float4 _fogColor;
+float4 _mapTint;
+float _mapScale;
+float _mapPositionX;
+float _mapPositionY;
+float _mapScale;
+int _iterations;
+
 TEXTURE2D_X(_InputTexture);
+TEXTURE2D_X(_map);
 
 struct Attributes
 {

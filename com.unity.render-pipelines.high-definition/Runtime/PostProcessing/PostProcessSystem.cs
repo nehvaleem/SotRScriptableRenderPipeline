@@ -2274,12 +2274,12 @@ namespace UnityEngine.Rendering.HighDefinition
             m_FogOfWarMaterial.SetTexture(HDShaderIDs._InputTexture, source);
             m_FogOfWarMaterial.SetMatrix(Shader.PropertyToID("_projMat"), Matrix4x4.Inverse(projMat * camera.camera.worldToCameraMatrix) * Matrix4x4.TRS(new Vector3(0, 0, -1 * projMat[10]), Quaternion.identity, Vector3.one));
             m_FogOfWarMaterial.SetColor(Shader.PropertyToID("_fogColor"), m_FogOfWar.fogColor.value);
-            m_FogOfWarMaterial.SetTexture(Shader.PropertyToID("map"), m_FogOfWar.map.value);
+            m_FogOfWarMaterial.SetTexture(Shader.PropertyToID("_map"), m_FogOfWar.map.value);
             m_FogOfWarMaterial.SetColor(Shader.PropertyToID("_mapTint"), m_FogOfWar.mapTint.value);
             m_FogOfWarMaterial.SetFloat(Shader.PropertyToID("_mapScale"), m_FogOfWar.mapScale.value);
             m_FogOfWarMaterial.SetFloat(Shader.PropertyToID("_mapPositionX"), m_FogOfWar.mapPosition.value.x);
             m_FogOfWarMaterial.SetFloat(Shader.PropertyToID("_mapPositionY"), m_FogOfWar.mapPosition.value.y);
-            m_FogOfWarMaterial.SetInt(Shader.PropertyToID("iterations"), m_FogOfWar.iterations.value);
+            m_FogOfWarMaterial.SetInt(Shader.PropertyToID("_iterations"), m_FogOfWar.iterations.value);
 
             HDUtils.DrawFullScreen(cmd, m_FogOfWarMaterial, destination);
         }
