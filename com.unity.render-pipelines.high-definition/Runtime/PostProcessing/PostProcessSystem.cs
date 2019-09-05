@@ -2241,6 +2241,7 @@ namespace UnityEngine.Rendering.HighDefinition
             projMat[15] = projMat[14] = projMat[11] = 0;
             ++projMat[15];
 
+            m_OutlineMaterial.SetTexture(HDShaderIDs._InputTexture, source);
             m_OutlineMaterial.SetMatrix(Shader.PropertyToID("_projMat"), Matrix4x4.Inverse(projMat * camera.camera.worldToCameraMatrix) * Matrix4x4.TRS(new Vector3(0, 0, -1 * projMat[10]), Quaternion.identity, Vector3.one));
             m_OutlineMaterial.SetInt(Shader.PropertyToID("_isDebugMode"), m_Outline.isDebugMode.value ? 1 : 0);
             m_OutlineMaterial.SetInt(Shader.PropertyToID("_useScreen"), m_Outline.useScreen.value ? 1 : 0);
