@@ -532,14 +532,14 @@ namespace UnityEngine.Rendering.HighDefinition
                     if (m_Outline.IsActive())
                     {
                         var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
-                        DoShadowOfTheRoadOutline(cmd, camera, source, destination, depthBuffer);
+                        DoShadowOfTheRoadOutline(cmd, camera, source, destination, depthBuffer, flipY);
                         PoolSource(ref source, destination);
                     }
 
                     /*if (m_FogOfWar.IsActive())
                     {
                         var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
-                        DoShadowOfTheRoadFogOfWar(cmd, camera, source, destination, depthBuffer);
+                        DoShadowOfTheRoadFogOfWar(cmd, camera, source, destination, depthBuffer, flipY);
                         PoolSource(ref source, destination);
                     }*/
                 }
@@ -2235,12 +2235,13 @@ namespace UnityEngine.Rendering.HighDefinition
 
         #region Shadow of the Road/Outline
 
-        void DoShadowOfTheRoadOutline(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, RTHandle depthBuffer)
+        void DoShadowOfTheRoadOutline(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, RTHandle depthBuffer, bool flipY)
         {
             Matrix4x4 projMat = GL.GetGPUProjectionMatrix(camera.camera.projectionMatrix, false);
             projMat[15] = projMat[14] = projMat[11] = 0;
             ++projMat[15];
 
+            m_OutlineMaterial.SetTexture(HDShaderIDs._InputTexture, source);
             m_OutlineMaterial.SetMatrix(Shader.PropertyToID("_projMat"), Matrix4x4.Inverse(projMat * camera.camera.worldToCameraMatrix) * Matrix4x4.TRS(new Vector3(0, 0, -1 * projMat[10]), Quaternion.identity, Vector3.one));
             m_OutlineMaterial.SetInt(Shader.PropertyToID("_isDebugMode"), m_Outline.isDebugMode.value ? 1 : 0);
             m_OutlineMaterial.SetInt(Shader.PropertyToID("_useScreen"), m_Outline.useScreen.value ? 1 : 0);
@@ -2251,6 +2252,11 @@ namespace UnityEngine.Rendering.HighDefinition
             m_OutlineMaterial.SetColor(Shader.PropertyToID("_outlineColor"), m_Outline.outlineColor.value);
             m_OutlineMaterial.SetFloat(Shader.PropertyToID("_thickness"), m_Outline.thickness.value);
             m_OutlineMaterial.SetFloat(Shader.PropertyToID("_offset"), Time.time);
+            m_OutlineMaterial.SetVector(HDShaderIDs._UVTransform,
+                flipY
+                    ? new Vector4(1.0f, -1.0f, 0.0f, 1.0f)
+                    : new Vector4(1.0f,  1.0f, 0.0f, 0.0f)
+            );
 
             HDUtils.DrawFullScreen(cmd, m_OutlineMaterial, destination);
         }
@@ -2259,8 +2265,14 @@ namespace UnityEngine.Rendering.HighDefinition
 
         #region Shadow of the Road/Fog of War
 
-        void DoShadowOfTheRoadFogOfWar(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, RTHandle depthBuffer)
+        void DoShadowOfTheRoadFogOfWar(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, RTHandle depthBuffer, bool flipY)
         {
+            Matrix4x4 projMat = GL.GetGPUProjectionMatrix(camera.camera.projectionMatrix, false);
+            projMat[15] = projMat[14] = projMat[11] = 0;
+            ++projMat[15];
+
+            m_OutlineMaterial.SetTexture(HDShaderIDs._InputTexture, source);
+            m_OutlineMaterial.SetMatrix(Shader.PropertyToID("_projMat"), Matrix4x4.Inverse(projMat * camera.camera.worldToCameraMatrix) * Matrix4x4.TRS(new Vector3(0, 0, -1 * projMat[10]), Quaternion.identity, Vector3.one));
             m_FogOfWarMaterial.SetColor(Shader.PropertyToID("_fogColor"), m_FogOfWar.fogColor.value);
             m_FogOfWarMaterial.SetTexture(Shader.PropertyToID("map"), m_FogOfWar.map.value);
             m_FogOfWarMaterial.SetColor(Shader.PropertyToID("_mapTint"), m_FogOfWar.mapTint.value);
