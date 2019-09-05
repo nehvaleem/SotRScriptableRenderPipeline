@@ -1,4 +1,4 @@
-﻿#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
@@ -9,6 +9,12 @@
 float4 _outlineColor;
 uniform float4x4 _projMat;
 float _offset;
+float _cavityBrightness;
+float _cavityContrast;
+float _distanceBrightness;
+float _distanceContrast;
+int _isDebugMode;
+TEXTURE2D_X(_InputTexture);
 
 struct Attributes
 {
@@ -89,7 +95,7 @@ float GetDistance(float2 texcoord)
 {
     float midDistance = GetDistanceSample(texcoord);
 
-    float leftDistance = GetDistanceSample(texcoord + float2(-1, 0));
+    float leftDistance = GetDistanceSample(texcoord + float2(1, 0));
     float leftDot = min(leftDistance, midDistance) / max(leftDistance, midDistance);
 
     float rightDistance = GetDistanceSample(texcoord + float2(1, 0));
@@ -97,7 +103,7 @@ float GetDistance(float2 texcoord)
 
     float LRdot = min(leftDistance, rightDistance) / max(leftDistance, rightDistance);
 
-    float topDistance = GetDistanceSample(texcoord + float2(0, -1));
+    float topDistance = GetDistanceSample(texcoord + float2(0, 1));
     float topDot = min(topDistance, midDistance) / max(topDistance, midDistance);
 
     float bottomDistance = GetDistanceSample(texcoord + float2(0, 1));
@@ -105,7 +111,7 @@ float GetDistance(float2 texcoord)
 
     float TBdot = min(topDistance, bottomDistance) / max(topDistance, bottomDistance);
 
-    float leftTopDistance = GetDistanceSample(texcoord + float2(-1, -1));
+    float leftTopDistance = GetDistanceSample(texcoord + float2(0, 0));
     float leftTopDot = min(leftTopDistance, midDistance) / max(leftTopDistance, midDistance);
 
     float rightBottomDistance = GetDistanceSample(texcoord + float2(1, 1));
@@ -113,10 +119,10 @@ float GetDistance(float2 texcoord)
 
     float LTRBdot = min(leftTopDistance, rightBottomDistance) / max(leftTopDistance, rightBottomDistance);
 
-    float leftBottomDistance = GetDistanceSample(texcoord + float2(-1, 1));
+    float leftBottomDistance = GetDistanceSample(texcoord + float2(0, 1));
     float leftBottomDot = min(leftBottomDistance, midDistance) / max(leftBottomDistance, midDistance);
 
-    float rightTopDistance = GetDistanceSample(texcoord + float2(1, -1));
+    float rightTopDistance = GetDistanceSample(texcoord + float2(1, 0));
     float rightTopDot = min(rightTopDistance, midDistance) / max(rightTopDistance, midDistance);
 
     float LBRTdot = min(leftBottomDistance, rightTopDistance) / max(leftBottomDistance, rightTopDistance);
@@ -181,31 +187,53 @@ float GetPosition(float2 texcoord, float3 worldDirection)
 
 float3 Frag(Varyings input) : SV_Target
 {
+    float4 color = 0;
     float depth = LoadCameraDepth(input.positionCS.xy);
+    float linearEyeDepth = LinearEyeDepth(depth, _ZBufferParams);
     PositionInputs posInput = GetPositionInput(input.positionCS.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V);
     BSDFData bsdfData;
     BuiltinData builtinData;
     DECODE_FROM_GBUFFER(posInput.positionSS, UINT_MAX, bsdfData, builtinData);
     NormalData normalData;
-    float4 normalBuffer = LOAD_TEXTURE2D_X(_NormalBufferTexture, posInput.positionSS);
-    DecodeFromNormalBuffer(normalBuffer, posInput.positionSS, normalData);
+    float4 inputTexture = LOAD_TEXTURE2D_X(_InputTexture, posInput.positionSS);
+    float4 inGBuffer3 = LOAD_TEXTURE2D_X(_GBufferTexture3, posInput.positionSS);
+    color = inputTexture;
 
-
-    // linear eye depth
-    float linearEyeDepth = LinearEyeDepth(depth, _ZBufferParams);
-
-    // World position
-    //float3 position = (input.worldDirection * linearEyeDepth + _WorldSpaceCameraPos);
-
-    // bakeDiffuseLighting
-    GBufferType0 inGBuffer3 = LOAD_TEXTURE2D_X(_GBufferTexture3, posInput.positionSS);
-
-
-    float3 cavity = GetCavity(posInput.positionSS);
     float3 position = GetPosition(posInput.positionSS, input.worldDirection);
+    float3 cavity = GetCavity(posInput.positionSS);
+    cavity = saturate(cavity + _cavityBrightness);
+    cavity = saturate(pow(cavity, _cavityContrast * 100));
+    float showAtDistance = 100;
+    float d = 1;
+    if (linearEyeDepth < showAtDistance)
+    {
+        cavity = cavity + pow(linearEyeDepth/showAtDistance, 4) + saturate(1 - position.y * 2 - 2);
+        cavity = saturate(cavity);
+    }
+    else
+    {
+        cavity = 1;
+    }
+
     float distance = GetDistance(posInput.positionSS);
+    distance = saturate(distance + _distanceBrightness);
+    distance = saturate(pow(distance, _distanceContrast * 100));
+    float outline = saturate(distance * cavity);
 
 
+    float light = max(max(inputTexture.r, inputTexture.g), inputTexture.b);
+    light = light * 2;
 
-    return position;// cavity * distance;
+    outline = lerp(light * 0.5, 1, outline.r);
+    outline = lerp(1, outline, _outlineColor.a);
+    outline = saturate(outline);
+    if (abs(position.x) < 70 && abs(position.z) < 70)
+    {
+        color.rgb = lerp(_outlineColor, inputTexture, outline.r);
+    }
+    if (_isDebugMode == 1)
+    {
+        color.rgb = outline;
+    }
+    return color;// inputTexture * cavity * distance;
 }
